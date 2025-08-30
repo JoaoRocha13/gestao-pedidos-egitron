@@ -58,19 +58,23 @@ Relações:
 - `Order (1) —— (N) OrderStatusHistory`
 - `ErrorLog` isolada (sem FK)
 
-
-
 ## ✅ Estado Atual
 - Projeto Spring Boot configurado
 - Script SQL criado e validado no MSSQL
 - BD `gestaopedidos` criada com tabelas e constraints
 - Entidades JPA (`Client`, `Order`, `OrderStatusHistory`, `ErrorLog`) implementadas
 - Repositórios Spring Data JPA criados
+- DTOs implementados:
+    - **CreateOrderDTO** → criação de pedidos
+    - **UpdateOrderDTO** → atualização parcial de pedidos
+    - **OrderFilterDTO** → centralização de filtros de pesquisa
+    - **OrderDTO** → resposta limpa para o frontend
 - Aplicação arranca sem erros de datasource
 
 ## 🔜 Próximos Passos
-- Criar controladores REST (`/clients`, `/orders`)
-- Implementar endpoints para **criar, listar e consultar pedidos**
+- Criar camada **Service** (`OrderService`)
+- Implementar regras de negócio: criar, atualizar, consultar, listar pedidos
+- Criar controladores REST (`/orders`, `/clients`) usando os DTOs
 - Adicionar validação externa de clientes (mock API)
 - Gerir logs de erro via `ErrorLog` + envio de e-mails
-- Implementar autenticação OAuth2 (Bearer token)
+- Implementar autenticação OAuth2 (Bearer token)  

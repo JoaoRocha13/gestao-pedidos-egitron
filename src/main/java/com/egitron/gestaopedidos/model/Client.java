@@ -1,4 +1,5 @@
 package com.egitron.gestaopedidos.model;
+import com.fasterxml.jackson.annotation.JsonIgnore; // add este import
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
@@ -29,6 +30,7 @@ public class Client {
     private LocalDateTime createdAtUtc;
     private LocalDateTime updatedAtUtc;
 
+    @JsonIgnore
     @OneToMany(mappedBy = "client", fetch = FetchType.LAZY)
     private List<Order> orders;
 
