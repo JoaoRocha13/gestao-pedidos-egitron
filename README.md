@@ -23,14 +23,14 @@ Desafio Técnico Backend (Spring Boot + Java 8 + MSSQL)
    cd gestao-pedidos
 
 2. Criar a base de dados e tabelas
-    - Executar o script `sql/gestaopedidos.sql` no SQL Server Management Studio (SSMS).
+    - Executar o script `db/schema.sql` no SQL Server Management Studio (SSMS).
     - Isto cria:
-        - Base de dados `gestaopedidos`
+        - Base de dados `gestaopedidosdb`
         - Login `egitron / egitron123`
-        - Tabelas: `Client`, `Order`, `OrderStatusHistory`, `ErrorLog`
+        - Tabelas: `Client`, `Order`, `ErrorLog`
 
 3. Configuração da ligação no `application.properties`  
-   spring.datasource.url=jdbc:sqlserver://localhost\\SQLEXPRESS;databaseName=gestaopedidos;encrypt=false;trustServerCertificate=true  
+   spring.datasource.url=jdbc:sqlserver://localhost\\SQLEXPRESS;databaseName=gestaopedidosdb;encrypt=false;trustServerCertificate=true  
    spring.datasource.username=egitron  
    spring.datasource.password=egitron123  
    spring.datasource.driver-class-name=com.microsoft.sqlserver.jdbc.SQLServerDriver
@@ -42,39 +42,40 @@ Desafio Técnico Backend (Spring Boot + Java 8 + MSSQL)
 4. Compilar e arrancar a aplicação  
    mvn spring-boot:run
 
-5. Endpoints de teste já disponíveis
-    - `/health` → responde "OK"
-    - (mais endpoints serão adicionados nas próximas fases)
+5. Endpoints implementados
+    - POST /api/orders → criar pedido
+    - GET /api/orders → listar pedidos (paginado + filtros)
+    - GET /api/orders/{id} → consultar pedido específico
+    - PATCH /api/orders/{id} → atualizar parcialmente (estado, cliente, valor)
 
 ## 📊 Modelo de Dados (E-R)
 Entidades principais:
 - **Client** → dados do cliente
 - **Order** → pedido associado a um cliente
-- **OrderStatusHistory** → histórico de estados do pedido
 - **ErrorLog** → registo de erros da aplicação
 
 Relações:
-- `Client (1) —— (N) Order`
-- `Order (1) —— (N) OrderStatusHistory`
-- `ErrorLog` isolada (sem FK)
+- Client (1) —— (N) Order
+- ErrorLog isolada (sem FK)
 
 ## ✅ Estado Atual
 - Projeto Spring Boot configurado
-- Script SQL criado e validado no MSSQL
-- BD `gestaopedidos` criada com tabelas e constraints
-- Entidades JPA (`Client`, `Order`, `OrderStatusHistory`, `ErrorLog`) implementadas
+- Script SQL (`db/schema.sql`) criado e validado no MSSQL
+- BD `gestaopedidosdb` criada com tabelas e constraints
+- Entidades JPA (`Client`, `Order`, `ErrorLog`) implementadas
 - Repositórios Spring Data JPA criados
 - DTOs implementados:
-    - **CreateOrderDTO** → criação de pedidos
-    - **UpdateOrderDTO** → atualização parcial de pedidos
-    - **OrderFilterDTO** → centralização de filtros de pesquisa
-    - **OrderDTO** → resposta limpa para o frontend
-- Aplicação arranca sem erros de datasource
+    - CreateOrderDTO → criação de pedidos
+    - UpdateOrderDTO → atualização parcial de pedidos
+    - OrderFilterDTO → filtros de pesquisa (status, email, datas, montantes, search)
+    - OrderDTO → resposta limpa para o frontend
+- Camada Service (`OrderServiceImpl`) implementada
+- Controlador REST (`OrderController`) criado
+- Pesquisa avançada com filtros implementada
+- Testes de API validados via Postman
+- Collection Postman exportada e incluída no repositório (`postman/GestaoPedidos_API.postman_collection.json`)
 
 ## 🔜 Próximos Passos
-- Criar camada **Service** (`OrderService`)
-- Implementar regras de negócio: criar, atualizar, consultar, listar pedidos
-- Criar controladores REST (`/orders`, `/clients`) usando os DTOs
 - Adicionar validação externa de clientes (mock API)
 - Gerir logs de erro via `ErrorLog` + envio de e-mails
 - Implementar autenticação OAuth2 (Bearer token)  

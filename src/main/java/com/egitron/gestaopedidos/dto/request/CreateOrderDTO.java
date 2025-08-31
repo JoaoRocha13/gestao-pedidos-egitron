@@ -18,8 +18,9 @@ public class CreateOrderDTO {
     @DecimalMin(value = "0.0", inclusive = false)
     private BigDecimal amount;
 
-    /** Optional: explicit desired status on creation; default handled in service if null
-     *  Expected values: PENDING, APPROVED, REJECTED (string for decoupling)
+    /**
+     * Optional: desired initial status. Defaults to "PENDING" if null.
+     * Expected values: PENDING, APPROVED, REJECTED
      */
     @Size(max = 30)
     private String status;
@@ -31,6 +32,7 @@ public class CreateOrderDTO {
 
     public String getClientEmail() { return clientEmail; }
     public void setClientEmail(String clientEmail) { this.clientEmail = clientEmail; }
+
 
     public BigDecimal getAmount() { return amount; }
     public void setAmount(BigDecimal amount) { this.amount = amount; }

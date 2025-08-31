@@ -12,6 +12,7 @@ public class UpdateOrderDTO {
     @Size(max = 180)
     private String clientEmail;
 
+
     @DecimalMin(value = "0.0", inclusive = false)
     private BigDecimal amount;
 

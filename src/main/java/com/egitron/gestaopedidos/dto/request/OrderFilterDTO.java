@@ -7,25 +7,22 @@ import java.time.OffsetDateTime;
 
 public class OrderFilterDTO {
 
-    private String status;             // PENDING/APPROVED/REJECTED
-    private String clientEmail;        // equals
-    private String search;             // free text: name/email (handled in service)
+    private String status;          // PENDING / APPROVED / REJECTED
+    private String clientEmail;     // filtro exato por email
+    private String search;          // pesquisa livre (nome/email)
 
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
-    private OffsetDateTime createdFrom;
+    private OffsetDateTime createdFrom;   // filtrar pedidos criados a partir desta data
 
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
-    private OffsetDateTime createdTo;
+    private OffsetDateTime createdTo;     // filtrar pedidos até esta data
 
-    private BigDecimal minAmount;
-    private BigDecimal maxAmount;
-
-    private Integer page;              // optional pagination hint
-    private Integer size;              // optional pagination hint
-    private String sort;               // e.g. "createdAt,desc"
+    private BigDecimal minAmount;   // valor mínimo
+    private BigDecimal maxAmount;   // valor máximo
 
     public OrderFilterDTO() {}
 
+    // getters e setters
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
 
@@ -46,13 +43,4 @@ public class OrderFilterDTO {
 
     public BigDecimal getMaxAmount() { return maxAmount; }
     public void setMaxAmount(BigDecimal maxAmount) { this.maxAmount = maxAmount; }
-
-    public Integer getPage() { return page; }
-    public void setPage(Integer page) { this.page = page; }
-
-    public Integer getSize() { return size; }
-    public void setSize(Integer size) { this.size = size; }
-
-    public String getSort() { return sort; }
-    public void setSort(String sort) { this.sort = sort; }
 }
