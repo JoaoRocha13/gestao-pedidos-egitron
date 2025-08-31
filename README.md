@@ -67,7 +67,7 @@ Relações:
 - DTOs implementados:
     - CreateOrderDTO → criação de pedidos
     - UpdateOrderDTO → atualização parcial de pedidos
-    - OrderFilterDTO → filtros de pesquisa (status, email, datas, montantes, search)
+    - OrderFilterDTO → filtros de pesquisa (status, datas, search)
     - OrderDTO → resposta limpa para o frontend
 - Camada Service (`OrderServiceImpl`) implementada
 - Controlador REST (`OrderController`) criado
