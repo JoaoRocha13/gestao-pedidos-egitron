@@ -20,8 +20,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
-import javax.persistence.criteria.Join;
-import javax.persistence.criteria.JoinType;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 import java.math.BigDecimal;
@@ -55,7 +53,7 @@ public class OrderServiceImpl implements com.egitron.gestaopedidos.service.Order
         order.setCurrentStatus(normalizeStatusOrDefault(dto.getStatus(), "PENDING"));
 
         order = orderRepository.save(order);
-        // TODO: guardar histórico de estados
+        // TODO: guardar histórico de estados (fase futura)
         return toDTO(order);
     }
 
@@ -97,7 +95,7 @@ public class OrderServiceImpl implements com.egitron.gestaopedidos.service.Order
             if (!Objects.equals(newStatus, order.getCurrentStatus())) {
                 order.setCurrentStatus(newStatus);
                 changed = true;
-                // TODO: registar histórico
+                // TODO: registar histórico (fase futura)
             }
         }
 
@@ -134,25 +132,21 @@ public class OrderServiceImpl implements com.egitron.gestaopedidos.service.Order
         return orderRepository.findAll(spec, effective).map(this::toDTO);
     }
 
-    // ---------- Specifications (Java 8 safe) ----------
+    // ---------- Specifications (apenas ESTADO e DATAS) ----------
 
     private Specification<Order> buildSpec(final OrderFilterDTO f) {
         return new Specification<Order>() {
             @Override
-            public Predicate toPredicate(Root<Order> root,
-                                         CriteriaQuery<?> query,
-                                         CriteriaBuilder cb) {
-
+            public Predicate toPredicate(Root<Order> root, CriteriaQuery<?> query, CriteriaBuilder cb) {
                 List<Predicate> predicates = new ArrayList<Predicate>();
-                Join<Order, Client> clientJoin = root.join("client", JoinType.LEFT);
 
-                // status
+                // Filtrar por ESTADO
                 if (hasText(f.getStatus())) {
                     String st = normalizeStatus(f.getStatus());
                     predicates.add(cb.equal(cb.upper(root.<String>get("currentStatus")), st));
                 }
 
-                // datas
+                // Filtrar por INTERVALO DE DATAS (criação)
                 if (f.getCreatedFrom() != null) {
                     LocalDateTime from = f.getCreatedFrom().toLocalDateTime();
                     predicates.add(cb.greaterThanOrEqualTo(root.<LocalDateTime>get("createdAtUtc"), from));
@@ -162,35 +156,12 @@ public class OrderServiceImpl implements com.egitron.gestaopedidos.service.Order
                     predicates.add(cb.lessThanOrEqualTo(root.<LocalDateTime>get("createdAtUtc"), to));
                 }
 
-                // valores
-                if (f.getMinAmount() != null) {
-                    predicates.add(cb.greaterThanOrEqualTo(root.<BigDecimal>get("totalAmount"), f.getMinAmount()));
-                }
-                if (f.getMaxAmount() != null) {
-                    predicates.add(cb.lessThanOrEqualTo(root.<BigDecimal>get("totalAmount"), f.getMaxAmount()));
-                }
-
-                // email exato (ignore case)
-                if (hasText(f.getClientEmail())) {
-                    predicates.add(cb.equal(
-                            cb.lower(clientJoin.<String>get("email")),
-                            f.getClientEmail().trim().toLowerCase()
-                    ));
-                }
-
-                // pesquisa livre (nome/email)
-                if (hasText(f.getSearch())) {
-                    String like = "%" + f.getSearch().trim().toLowerCase() + "%";
-                    predicates.add(cb.or(
-                            cb.like(cb.lower(clientJoin.<String>get("name")), like),
-                            cb.like(cb.lower(clientJoin.<String>get("email")), like)
-                    ));
-                }
-
                 return cb.and(predicates.toArray(new Predicate[predicates.size()]));
             }
         };
     }
+
+    // ---------- Helpers ----------
 
     private Client findOrCreateClient(String name, String email) {
         if (!hasText(email)) {
