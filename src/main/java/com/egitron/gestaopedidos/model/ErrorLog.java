@@ -2,63 +2,48 @@ package com.egitron.gestaopedidos.model;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 
 @Entity
-@Table(name = "ErrorLog")
+@Table(name = "error_log")
 public class ErrorLog {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "errorId")  // PK na BD
-    private Long errorId;
+    private Integer id;
 
-    @Column(name = "occurredAtUtc")
-    private LocalDateTime occurredAtUtc;
-
-    @Column(name = "level", nullable = false, length = 20)
-    private String level;
-
-    @Column(name = "source", length = 120)
-    private String source;
-
-    @Column(name = "endpoint", length = 255)
-    private String endpoint;
-
-    @Column(name = "message", nullable = false, length = 400)
+    @Column(nullable = false, length = 4000)
     private String message;
 
-    @Column(name = "details", columnDefinition = "NVARCHAR(MAX)")
-    private String details;
+    @Lob
+    @Column(name = "stacktrace")
+    private String stacktrace;
 
-    /* ============================
-       CALLBACK JPA
-       ============================ */
+    @Column(length = 1000, name = "context")
+    private String context;
+
+    @Column(name = "created_at_utc", nullable = false)
+    private LocalDateTime createdAtUtc;
+
     @PrePersist
-    protected void onCreate() {
-        if (this.occurredAtUtc == null) {
-            this.occurredAtUtc = LocalDateTime.now();
+    public void prePersist() {
+        if (createdAtUtc == null) {
+            createdAtUtc = LocalDateTime.now(ZoneOffset.UTC);
         }
     }
 
-    // Getters & Setters
-    public Long getErrorId() { return errorId; }
-    public void setErrorId(Long errorId) { this.errorId = errorId; }
-
-    public LocalDateTime getOccurredAtUtc() { return occurredAtUtc; }
-    public void setOccurredAtUtc(LocalDateTime occurredAtUtc) { this.occurredAtUtc = occurredAtUtc; }
-
-    public String getLevel() { return level; }
-    public void setLevel(String level) { this.level = level; }
-
-    public String getSource() { return source; }
-    public void setSource(String source) { this.source = source; }
-
-    public String getEndpoint() { return endpoint; }
-    public void setEndpoint(String endpoint) { this.endpoint = endpoint; }
+    // --- getters/setters ---
+    public Integer getId() { return id; }
 
     public String getMessage() { return message; }
     public void setMessage(String message) { this.message = message; }
 
-    public String getDetails() { return details; }
-    public void setDetails(String details) { this.details = details; }
+    public String getStacktrace() { return stacktrace; }
+    public void setStacktrace(String stacktrace) { this.stacktrace = stacktrace; }
+
+    public String getContext() { return context; }
+    public void setContext(String context) { this.context = context; }
+
+    public LocalDateTime getCreatedAtUtc() { return createdAtUtc; }
+    public void setCreatedAtUtc(LocalDateTime createdAtUtc) { this.createdAtUtc = createdAtUtc; }
 }

@@ -50,4 +50,8 @@ public class OrderController {   // <- renomeado
     public ResponseEntity<OrderDTO> update(@PathVariable Integer id, @Valid @RequestBody UpdateOrderDTO body) {
         return ResponseEntity.ok(orderService.update(id, body));
     }
+    @GetMapping("/boom")
+    public void boom() {
+        throw new RuntimeException("boom test");
+    }
 }

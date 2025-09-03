@@ -10,6 +10,7 @@ Desafio Técnico Backend (Spring Boot + Java 8 + MSSQL)
 - SQL Server (MSSQL)
 - Postman (testes de API)
 - Mailtrap (testes de e-mail)
+- Spring Boot Actuator (health check)
 
 ## 📦 Requisitos
 - JDK 1.8 instalado
@@ -39,14 +40,21 @@ Desafio Técnico Backend (Spring Boot + Java 8 + MSSQL)
    spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.SQLServer2012Dialect  
    spring.jpa.show-sql=false
 
+   # Actuator
+   management.endpoints.web.exposure.include=health
+   management.endpoint.health.show-details=always  
+   
+  
 4. Compilar e arrancar a aplicação  
    mvn spring-boot:run
 
 5. Endpoints implementados
     - POST /api/orders → criar pedido
-    - GET /api/orders → listar pedidos (paginado + filtros)
+    - GET /api/orders → listar pedidos (paginado + filtros status/datas)
     - GET /api/orders/{id} → consultar pedido específico
     - PATCH /api/orders/{id} → atualizar parcialmente (estado, cliente, valor)
+    - GET /actuator/health → estado da API e BD
+  
 
 ## 📊 Modelo de Dados (E-R)
 Entidades principais:
@@ -67,15 +75,22 @@ Relações:
 - DTOs implementados:
     - CreateOrderDTO → criação de pedidos
     - UpdateOrderDTO → atualização parcial de pedidos
-    - OrderFilterDTO → filtros de pesquisa (status, datas, search)
+    - OrderFilterDTO → filtros de pesquisa (status, datas)
     - OrderDTO → resposta limpa para o frontend
 - Camada Service (`OrderServiceImpl`) implementada
 - Controlador REST (`OrderController`) criado
-- Pesquisa avançada com filtros implementada
+- Pesquisa com filtros (status + intervalo de datas) implementada
 - Testes de API validados via Postman
 - Collection Postman exportada e incluída no repositório (`postman/GestaoPedidos_API.postman_collection.json`)
+- **Gestão de Erros**:
+    - `ApiError` → formato único para respostas de erro
+    - `GlobalExceptionHandler` → centraliza tratamento (400, 404, 500)
+    - `ErrorLog` + `ErrorLogService` → registo de todos os erros na BD
+- **Health**:
+    - `/actuator/health` → mostra estado da API e ligação à BD
+    - `/actuator/info` → metadados da aplicação
 
 ## 🔜 Próximos Passos
 - Adicionar validação externa de clientes (mock API)
-- Gerir logs de erro via `ErrorLog` + envio de e-mails
+- Envio de relatórios de erros por e-mail (Mailtrap)
 - Implementar autenticação OAuth2 (Bearer token)  
