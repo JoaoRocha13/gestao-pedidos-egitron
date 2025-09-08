@@ -1,5 +1,6 @@
 package com.egitron.gestaopedidos.service.impl;
 
+import com.egitron.gestaopedidos.service.client.ClientValidationService;
 import com.egitron.gestaopedidos.dto.request.CreateOrderDTO;
 import com.egitron.gestaopedidos.dto.request.OrderFilterDTO;
 import com.egitron.gestaopedidos.dto.request.UpdateOrderDTO;
@@ -18,6 +19,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Predicate;
@@ -34,17 +36,26 @@ public class OrderServiceImpl implements com.egitron.gestaopedidos.service.Order
 
     private final OrderRepository orderRepository;
     private final ClientRepository clientRepository;
+    private final ClientValidationService clientValidationService;
 
     public OrderServiceImpl(OrderRepository orderRepository,
-                            ClientRepository clientRepository) {
+                            ClientRepository clientRepository,
+                            ClientValidationService clientValidationService) {
         this.orderRepository = orderRepository;
         this.clientRepository = clientRepository;
+        this.clientValidationService = clientValidationService;
     }
 
-    @Transactional
     @Override
+    @Transactional
     public OrderDTO create(CreateOrderDTO dto) {
-        // TODO: validação externa do cliente (fase 2)
+        ClientValidationService.ValidationResult v =
+                clientValidationService.validate(dto.getClientName(), dto.getClientEmail());
+
+        if (!v.isValid()) {
+            throw new BadRequestException("Cliente inválido (validação externa): " + v.getReason());
+        }
+
         Client client = findOrCreateClient(dto.getClientName(), dto.getClientEmail());
 
         Order order = new Order();
@@ -52,57 +63,53 @@ public class OrderServiceImpl implements com.egitron.gestaopedidos.service.Order
         order.setTotalAmount(dto.getAmount());
         order.setCurrentStatus(normalizeStatusOrDefault(dto.getStatus(), "PENDING"));
 
+        // grava o resultado da validação no pedido
+        order.setValidated(Boolean.TRUE);
+        order.setValidationReason(v.getReason());          // OK
+        order.setValidationExternalId(v.getExternalId());  // id vindo do mock
+        order.setValidatedAt(java.time.LocalDateTime.now());
+
         order = orderRepository.save(order);
-        // TODO: guardar histórico de estados (fase futura)
         return toDTO(order);
     }
 
-    @Transactional
     @Override
+    @Transactional
     public OrderDTO update(Integer orderId, UpdateOrderDTO dto) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new NotFoundException("Order not found: " + orderId));
 
-        boolean changed = false;
+        boolean willTouchClient = (hasText(dto.getClientName()) || hasText(dto.getClientEmail()));
+        if (willTouchClient) {
+            String newName  = hasText(dto.getClientName())  ? dto.getClientName()  : order.getClient().getName();
+            String newEmail = hasText(dto.getClientEmail()) ? dto.getClientEmail() : order.getClient().getEmail();
 
-        // Cliente
-        if (dto.getClientEmail() != null || dto.getClientName() != null) {
-            String newName = dto.getClientName() != null ? dto.getClientName() : order.getClient().getName();
-            String newEmail = dto.getClientEmail() != null ? dto.getClientEmail() : order.getClient().getEmail();
-            Client client = findOrCreateClient(newName, newEmail);
-
-            if (!order.getClient().getEmail().equalsIgnoreCase(newEmail)) {
-                order.setClient(client);
-                changed = true;
-            } else if (!Objects.equals(order.getClient().getName(), newName)) {
-                order.getClient().setName(newName);
-                changed = true;
+            ClientValidationService.ValidationResult v =
+                    clientValidationService.validate(newName, newEmail);
+            if (!v.isValid()) {
+                throw new BadRequestException("Cliente inválido (validação externa): " + v.getReason());
             }
+
+            // aplica no cliente
+            if (hasText(dto.getClientName()))  order.getClient().setName(dto.getClientName());
+            if (hasText(dto.getClientEmail())) order.getClient().setEmail(dto.getClientEmail());
+
+            // atualiza resultado da validação no pedido
+            order.setValidated(Boolean.TRUE);
+            order.setValidationReason(v.getReason());
+            order.setValidationExternalId(v.getExternalId());
+            order.setValidatedAt(java.time.LocalDateTime.now());
         }
 
-        // Valor
         if (dto.getAmount() != null) {
-            validatePositive(dto.getAmount());
-            if (!dto.getAmount().equals(order.getTotalAmount())) {
-                order.setTotalAmount(dto.getAmount());
-                changed = true;
-            }
+            if (dto.getAmount().signum() <= 0) throw new BadRequestException("Amount deve ser > 0");
+            order.setTotalAmount(dto.getAmount());
+        }
+        if (hasText(dto.getStatus())) {
+            order.setCurrentStatus(normalizeStatus(dto.getStatus()));
         }
 
-        // Estado
-        if (dto.getStatus() != null) {
-            String newStatus = normalizeStatus(dto.getStatus());
-            if (!Objects.equals(newStatus, order.getCurrentStatus())) {
-                order.setCurrentStatus(newStatus);
-                changed = true;
-                // TODO: registar histórico (fase futura)
-            }
-        }
-
-        if (changed) {
-            order = orderRepository.save(order);
-        }
-
+        order = orderRepository.save(order);
         return toDTO(order);
     }
 
@@ -132,7 +139,7 @@ public class OrderServiceImpl implements com.egitron.gestaopedidos.service.Order
         return orderRepository.findAll(spec, effective).map(this::toDTO);
     }
 
-    // ---------- Specifications (apenas ESTADO e DATAS) ----------
+    // Specifications (apenas ESTADO e DATAS)
 
     private Specification<Order> buildSpec(final OrderFilterDTO f) {
         return new Specification<Order>() {
@@ -161,31 +168,33 @@ public class OrderServiceImpl implements com.egitron.gestaopedidos.service.Order
         };
     }
 
-    // ---------- Helpers ----------
+    // Helpers
 
     private Client findOrCreateClient(String name, String email) {
         if (!hasText(email)) {
             throw new BadRequestException("Client email is required.");
         }
-        email = email.trim();
-        name = (name == null) ? null : name.trim();
 
-        Client client = clientRepository.findByEmail(email).orElse(null);
-        if (client != null) {
-            boolean changed = false;
-            if (name != null && !name.equals(client.getName())) {
-                client.setName(name);
-                changed = true;
+        final String emailTrim = email.trim();
+        final String nameTrim  = (name == null) ? null : name.trim();
+
+        // tenta obter cliente existente por email
+        java.util.Optional<Client> opt = clientRepository.findByEmail(emailTrim);
+        if (opt.isPresent()) {
+            Client existing = opt.get();
+            if (nameTrim != null && !nameTrim.equals(existing.getName())) {
+                throw new BadRequestException(
+                        "Já existe um cliente com este email (" + emailTrim + ") registado com o nome '" +
+                                existing.getName() + "'. Não é permitido criar pedido com nome diferente."
+                );
             }
-            if (changed) {
-                client = clientRepository.save(client);
-            }
-            return client;
+            return existing;
         }
 
+        // cria novo cliente
         Client created = new Client();
-        created.setName(name);
-        created.setEmail(email);
+        created.setName(nameTrim);
+        created.setEmail(emailTrim);
         return clientRepository.save(created);
     }
 

@@ -4,6 +4,8 @@ import javax.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+import javax.persistence.Column;
+
 
 @Entity
 @Table(name = "[Order]") // ⚠️ "Order" é palavra reservada em SQL Server
@@ -29,6 +31,19 @@ public class Order {
 
     @Column(name = "updatedAtUtc")
     private LocalDateTime updatedAtUtc;
+
+
+    @Column(name = "validated")
+    private Boolean validated;
+
+    @Column(name = "validationReason", length = 255)
+    private String validationReason;
+
+    @Column(name = "validationExternalId", length = 64)
+    private String validationExternalId;
+
+    @Column(name = "validatedAt")
+    private LocalDateTime validatedAt;
 
 
 
@@ -64,6 +79,34 @@ public class Order {
 
     public LocalDateTime getUpdatedAtUtc() { return updatedAtUtc; }
     public void setUpdatedAtUtc(LocalDateTime updatedAtUtc) { this.updatedAtUtc = updatedAtUtc; }
+
+    public Boolean getValidated() {
+        return validated;
+    }
+    public void setValidated(Boolean validated) {
+        this.validated = validated;
+    }
+
+    public String getValidationReason() {
+        return validationReason;
+    }
+    public void setValidationReason(String validationReason) {
+        this.validationReason = validationReason;
+    }
+
+    public String getValidationExternalId() {
+        return validationExternalId;
+    }
+    public void setValidationExternalId(String validationExternalId) {
+        this.validationExternalId = validationExternalId;
+    }
+
+    public LocalDateTime getValidatedAt() {
+        return validatedAt;
+    }
+    public void setValidatedAt(LocalDateTime validatedAt) {
+        this.validatedAt = validatedAt;
+    }
 
 
 }
