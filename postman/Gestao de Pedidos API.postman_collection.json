@@ -4,7 +4,7 @@
 		"name": "Gestao de Pedidos API",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
 		"_exporter_id": "48033806",
-		"_collection_link": "https://rochadev13-6402621.postman.co/workspace/29d150ce-c25b-4deb-84e2-0f85a8fb263b/collection/48033806-c7859225-f5fe-494e-85a2-8c0c4f878079?action=share&source=collection_link&creator=48033806"
+		"_collection_link": "https://rochadev13-6402621.postman.co/workspace/Joao-Rocha's-Workspace~29d150ce-c25b-4deb-84e2-0f85a8fb263b/collection/48033806-c7859225-f5fe-494e-85a2-8c0c4f878079?action=share&source=collection_link&creator=48033806"
 	},
 	"item": [
 		{
@@ -41,6 +41,30 @@
 		},
 		{
 			"name": "GET/Orders{filter}",
+			"request": {
+				"method": "GET",
+				"header": []
+			},
+			"response": []
+		},
+		{
+			"name": "GET/Health",
+			"request": {
+				"method": "GET",
+				"header": []
+			},
+			"response": []
+		},
+		{
+			"name": "POST/Mock Verify Clients",
+			"request": {
+				"method": "GET",
+				"header": []
+			},
+			"response": []
+		},
+		{
+			"name": "GET/Order Status History",
 			"request": {
 				"method": "GET",
 				"header": []

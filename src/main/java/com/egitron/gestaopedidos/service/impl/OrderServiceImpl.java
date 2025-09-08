@@ -1,5 +1,6 @@
 package com.egitron.gestaopedidos.service.impl;
 
+import com.egitron.gestaopedidos.service.OrderStatusHistoryService;
 import com.egitron.gestaopedidos.service.client.ClientValidationService;
 import com.egitron.gestaopedidos.dto.request.CreateOrderDTO;
 import com.egitron.gestaopedidos.dto.request.OrderFilterDTO;
@@ -37,14 +38,18 @@ public class OrderServiceImpl implements com.egitron.gestaopedidos.service.Order
     private final OrderRepository orderRepository;
     private final ClientRepository clientRepository;
     private final ClientValidationService clientValidationService;
+    private final OrderStatusHistoryService orderStatusHistoryService;
 
     public OrderServiceImpl(OrderRepository orderRepository,
                             ClientRepository clientRepository,
-                            ClientValidationService clientValidationService) {
+                            ClientValidationService clientValidationService,
+                            OrderStatusHistoryService orderStatusHistoryService) {
         this.orderRepository = orderRepository;
         this.clientRepository = clientRepository;
         this.clientValidationService = clientValidationService;
+        this.orderStatusHistoryService = orderStatusHistoryService;
     }
+
 
     @Override
     @Transactional
@@ -63,13 +68,22 @@ public class OrderServiceImpl implements com.egitron.gestaopedidos.service.Order
         order.setTotalAmount(dto.getAmount());
         order.setCurrentStatus(normalizeStatusOrDefault(dto.getStatus(), "PENDING"));
 
-        // grava o resultado da validação no pedido
+        // persist external validation result on the order
         order.setValidated(Boolean.TRUE);
-        order.setValidationReason(v.getReason());          // OK
-        order.setValidationExternalId(v.getExternalId());  // id vindo do mock
+        order.setValidationReason(v.getReason());
+        order.setValidationExternalId(v.getExternalId());
         order.setValidatedAt(java.time.LocalDateTime.now());
 
         order = orderRepository.save(order);
+
+        // NEW: record initial status in history
+        orderStatusHistoryService.recordStatusChange(
+                order,
+                order.getCurrentStatus(),
+                "API",
+                "Order created"
+        );
+
         return toDTO(order);
     }
 
@@ -90,11 +104,11 @@ public class OrderServiceImpl implements com.egitron.gestaopedidos.service.Order
                 throw new BadRequestException("Cliente inválido (validação externa): " + v.getReason());
             }
 
-            // aplica no cliente
+            // apply changes on client
             if (hasText(dto.getClientName()))  order.getClient().setName(dto.getClientName());
             if (hasText(dto.getClientEmail())) order.getClient().setEmail(dto.getClientEmail());
 
-            // atualiza resultado da validação no pedido
+            // persist external validation result on the order
             order.setValidated(Boolean.TRUE);
             order.setValidationReason(v.getReason());
             order.setValidationExternalId(v.getExternalId());
@@ -105,11 +119,27 @@ public class OrderServiceImpl implements com.egitron.gestaopedidos.service.Order
             if (dto.getAmount().signum() <= 0) throw new BadRequestException("Amount deve ser > 0");
             order.setTotalAmount(dto.getAmount());
         }
+
+        // capture previous status to decide whether to write history
+        String previousStatus = order.getCurrentStatus();
+
         if (hasText(dto.getStatus())) {
             order.setCurrentStatus(normalizeStatus(dto.getStatus()));
         }
 
         order = orderRepository.save(order);
+
+        // NEW: only record history if status actually changed
+        if ((previousStatus == null && order.getCurrentStatus() != null)
+                || (previousStatus != null && !previousStatus.equalsIgnoreCase(order.getCurrentStatus()))) {
+            orderStatusHistoryService.recordStatusChange(
+                    order,
+                    order.getCurrentStatus(),
+                    "API",
+                    "Order status updated"
+            );
+        }
+
         return toDTO(order);
     }
 
