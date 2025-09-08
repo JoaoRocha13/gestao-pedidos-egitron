@@ -16,7 +16,7 @@ public class UpdateOrderDTO {
     @DecimalMin(value = "0.0", inclusive = false)
     private BigDecimal amount;
 
-    /** State transition is explicit here */
+
     @Size(max = 30)
     private String status; // PENDING/APPROVED/REJECTED
 

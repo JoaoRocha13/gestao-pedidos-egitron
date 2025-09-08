@@ -12,7 +12,7 @@ public class Client {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "clientId") // PK na BD
+    @Column(name = "clientId")
     private Integer clientId;
 
     @Column(name = "name", nullable = false, length = 120)
@@ -43,7 +43,7 @@ public class Client {
         this.updatedAtUtc = LocalDateTime.now();
     }
 
-    // Getters & setters
+
     public Integer getClientId() { return clientId; }
     public void setClientId(Integer clientId) { this.clientId = clientId; }
 

@@ -3,20 +3,13 @@ package com.egitron.gestaopedidos.dto.request;
 import org.springframework.format.annotation.DateTimeFormat;
 import java.time.OffsetDateTime;
 
-/**
- * DTO de filtros de pesquisa para Orders.
- * Requisito: apenas filtrar por estado ou intervalo de datas (criação).
- */
-public class OrderFilterDTO {
 
-    // Estado do pedido: PENDING, APPROVED, REJECTED
+public class OrderFilterDTO {
     private String status;
 
-    // Data inicial (inclusive)
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
     private OffsetDateTime createdFrom;
 
-    // Data final (inclusive)
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
     private OffsetDateTime createdTo;
 

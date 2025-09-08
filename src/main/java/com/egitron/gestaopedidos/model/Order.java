@@ -47,9 +47,7 @@ public class Order {
 
 
 
-    /* ============================
-       CALLBACKS JPA
-       ============================ */
+    /*CALLBACKS JPA*/
     @PrePersist
     protected void onCreate() {
         this.createdAtUtc = LocalDateTime.now();
@@ -61,7 +59,7 @@ public class Order {
         this.updatedAtUtc = LocalDateTime.now();
     }
 
-    // Getters & setters
+
     public Integer getOrderId() { return orderId; }
     public void setOrderId(Integer orderId) { this.orderId = orderId; }
 

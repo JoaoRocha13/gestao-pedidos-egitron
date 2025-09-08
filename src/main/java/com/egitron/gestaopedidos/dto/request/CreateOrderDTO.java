@@ -18,10 +18,7 @@ public class CreateOrderDTO {
     @DecimalMin(value = "0.0", inclusive = false)
     private BigDecimal amount;
 
-    /**
-     * Optional: desired initial status. Defaults to "PENDING" if null.
-     * Expected values: PENDING, APPROVED, REJECTED
-     */
+
     @Size(max = 30)
     private String status;
 

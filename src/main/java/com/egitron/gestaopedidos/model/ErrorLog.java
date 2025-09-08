@@ -5,45 +5,58 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 
 @Entity
-@Table(name = "error_log")
+@Table(name = "ErrorLog")
 public class ErrorLog {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer id;
+    @Column(name = "errorId")
+    private Long id;
 
-    @Column(nullable = false, length = 4000)
+    @Column(name = "occurredAtUtc", nullable = false)
+    private LocalDateTime occurredAtUtc;
+
+    @Column(name = "level", nullable = false, length = 20)
+    private String level;                // ex: ERROR, WARN, INFO
+
+    @Column(name = "source", length = 240)
+    private String source;
+
+    @Column(name = "endpoint", length = 510)
+    private String endpoint;
+
+    @Column(name = "message", length = 800)
     private String message;
-
     @Lob
-    @Column(name = "stacktrace")
-    private String stacktrace;
-
-    @Column(length = 1000, name = "context")
-    private String context;
-
-    @Column(name = "created_at_utc", nullable = false)
-    private LocalDateTime createdAtUtc;
+    @Column(name = "details")
+    private String details;
 
     @PrePersist
     public void prePersist() {
-        if (createdAtUtc == null) {
-            createdAtUtc = LocalDateTime.now(ZoneOffset.UTC);
+        if (occurredAtUtc == null) {
+            occurredAtUtc = LocalDateTime.now(ZoneOffset.UTC);
         }
+        if (level == null) level = "ERROR";
     }
 
-    // --- getters/setters ---
-    public Integer getId() { return id; }
+
+    public Long getId() { return id; }
+
+    public LocalDateTime getOccurredAtUtc() { return occurredAtUtc; }
+    public void setOccurredAtUtc(LocalDateTime occurredAtUtc) { this.occurredAtUtc = occurredAtUtc; }
+
+    public String getLevel() { return level; }
+    public void setLevel(String level) { this.level = level; }
+
+    public String getSource() { return source; }
+    public void setSource(String source) { this.source = source; }
+
+    public String getEndpoint() { return endpoint; }
+    public void setEndpoint(String endpoint) { this.endpoint = endpoint; }
 
     public String getMessage() { return message; }
     public void setMessage(String message) { this.message = message; }
 
-    public String getStacktrace() { return stacktrace; }
-    public void setStacktrace(String stacktrace) { this.stacktrace = stacktrace; }
-
-    public String getContext() { return context; }
-    public void setContext(String context) { this.context = context; }
-
-    public LocalDateTime getCreatedAtUtc() { return createdAtUtc; }
-    public void setCreatedAtUtc(LocalDateTime createdAtUtc) { this.createdAtUtc = createdAtUtc; }
+    public String getDetails() { return details; }
+    public void setDetails(String details) { this.details = details; }
 }

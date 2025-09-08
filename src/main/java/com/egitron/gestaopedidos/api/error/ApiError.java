@@ -3,11 +3,7 @@ package com.egitron.gestaopedidos.api.error;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 
-/**
- * DTO de resposta de erro da API.
- * É devolvido pelo GlobalExceptionHandler em qualquer erro.
- * Mantém o formato consistente para o frontend.
- */
+
 public class ApiError {
 
     private final OffsetDateTime timestamp = OffsetDateTime.now(ZoneOffset.UTC);
