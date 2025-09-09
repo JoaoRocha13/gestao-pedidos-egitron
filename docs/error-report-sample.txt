@@ -1,0 +1,8 @@
+Relatório de Erros 2025-09-09T15:25:00.005 -> 2025-09-09T16:25:00.005
+Total: 2
+
+2025-09-09T16:22:19 [ERROR] java.lang.RuntimeException @ GET /api/orders/boom
+boom test
+
+2025-09-09T16:24:30 [ERROR] com.egitron.gestaopedidos.exception.BadRequestException @ POST /api/orders
+Já existe um cliente com este email (rock@email.com) registado com o nome 'rock Silva'. Não é permitido criar pedido com nome diferente.

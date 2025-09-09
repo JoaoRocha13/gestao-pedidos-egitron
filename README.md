@@ -29,7 +29,7 @@ git clone <repo>
 cd gestao-pedidos
 
 ### 2) Criar a base de dados e tabelas (SSMS)
-Executar o script `db/schema.sql`.  
+Executar o script `db/gestaopedidosdb.sql`.  
 Isto cria:
 
 - Base de dados `gestaopedidosdb`
@@ -105,7 +105,39 @@ error.report.cron=*/30 * * * * *
 error.report.lookbackHours=1  
 error.report.maxItems=200
 
+
+## 📎 Evidências (Logs & Relatórios)
+
+**Ficheiros em `/docs`:**
+- `error-report-sample.txt` — corpo do e-mail do Mailtrap.
+- `error-report-mailtrap-01.png` (opcional).
+- `error-log-sample.json` — 1–2 registos do `ErrorLog`.
+
+
+**Reproduzir (DEV):**
+1) `application.properties`  
+   `error.report.cron=0 */1 * * * *`  # depois volta a diário (ex.: 0 0 9 * * *)
+
+2) Forçar erros:  
+   `GET {{baseUrl}}/api/orders/boom` (Bearer `{{token}}`)
+
+3) Mailtrap → copiar corpo do e-mail para `docs/error-report-sample.txt`.
+
+4) SSMS → exportar 2 registos em JSON (copiar a célula do grid e colar em `docs/error-log-sample.json`):
+```sql
+SELECT TOP (2)
+  errorId AS id,
+  CONVERT(varchar(19), occurredAtUtc, 126) AS occurredAt,
+  [level], [source], endpoint, [message],
+  LEFT(details, 600) + CASE WHEN LEN(details) > 600 THEN ' …(truncated)' ELSE '' END AS details
+FROM dbo.ErrorLog
+ORDER BY occurredAtUtc DESC
+FOR JSON PATH;.
+```
+
 ---
+
+
 
 ## Histórico de Status de Pedido
 - **OrderStatusHistory**: guarda cada alteração de estado de um `Order`.
