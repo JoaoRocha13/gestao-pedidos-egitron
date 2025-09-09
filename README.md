@@ -124,6 +124,11 @@ Permite consultar todas as transições de estado de um pedido.
 - **GET /api/orders/{id}/history** → histórico de alterações de estado
 - **GET /actuator/health** → estado da API e BD
 - **POST /mock-api/clients/verify** → mock de validação externa (DEV)
+- **POST /auth/login(token)** → autenticação com JWT/OAuth2
+- **GET /auth/me(token)** → info do utilizador autenticado (debug)
+- **GET /orders (token)** → listar pedidos autenticados
+- **POST /orders (token)** → criar pedido autenticado
+- 
 
 ---
 
@@ -135,12 +140,52 @@ Permite consultar todas as transições de estado de um pedido.
 
 ---
 
+## Autenticação OAuth2 / JWT (Bearer)
+
+- Configuração: 
+
+- Utilizador de aplicação
+app.auth.username=admin
+app.auth.password.bcrypt=<hash BCrypt de admin123>
+
+- JWT
+app.jwt.secret=egitron-gestao-pedidos-super-secret-key-2025-abc123456789!
+app.jwt.expirationMillis=3600000
+
+- Endpoints de Auth
+
+POST /auth/login → devolve JWT
+
+GET /auth/me → devolve utilizador autenticado (debug)
+
+
+## Fluxo de Autenticação (resumo)
+- 1) Login
+
+Frontend → POST /auth/login
+Controller valida credenciais
+JwtService gera JWT
+Resposta com accessToken
+
+2) Chamada protegida
+Frontend → GET /api/orders com Authorization: Bearer <token>
+JwtAuthFilter valida token
+SecurityConfig deixa passar
+OrdersController executa
+
+3) Token inválido/ausente
+JwtAuthFilter não autentica
+SecurityConfig bloqueia → 401 Unauthorized
+
+
 ## Estado Atual
 - Projeto configurado com Spring Boot + SQL Server.
 - Migrações aplicadas (validação em `Order`, histórico de estados).
 - Entidades: `Client`, `Order`, `ErrorLog`, `OrderStatusHistory`.
 - Serviços: validação externa, logging, relatórios de erros, envio de emails.
+- Autenticação JWT concluída (OAuth2 Bearer).
 - Endpoints Postman preparados para testar todas as features.
+- 
 
 ---
 
@@ -151,8 +196,7 @@ Permite consultar todas as transições de estado de um pedido.
 - Tratamento uniforme de erros (400/404/500).
 - Integração com serviços externos (mock + real).
 - Relatórios automáticos + histórico de estados para auditoria.
+- Segurança minimalista e eficaz com JWT.
 
 ---
 
-## Próximos Passos
-- Implementar **Autenticação OAuth2 / JWT** conforme requisito do desafio.
