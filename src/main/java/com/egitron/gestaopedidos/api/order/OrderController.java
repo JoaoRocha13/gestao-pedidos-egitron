@@ -74,7 +74,7 @@ public class OrderController {
         return ResponseEntity.ok(result);
     }
 
-    // Mapper for history entity -> DTO
+
     private OrderStatusHistoryDTO toHistoryDTO(OrderStatusHistory h) {
         OrderStatusHistoryDTO dto = new OrderStatusHistoryDTO();
         dto.setHistoryId(h.getHistoryId());

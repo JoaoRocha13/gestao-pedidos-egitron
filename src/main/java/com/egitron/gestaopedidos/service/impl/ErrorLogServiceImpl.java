@@ -23,7 +23,7 @@ public class ErrorLogServiceImpl implements ErrorLogService {
     @Transactional
     public void log(Exception ex, HttpServletRequest req) {
         ErrorLog l = new ErrorLog();
-        l.setLevel("ERROR"); // obrigatório na BD
+        l.setLevel("ERROR");
         l.setSource(ex != null ? ex.getClass().getName() : "unknown");
         if (req != null) {
             l.setEndpoint(req.getMethod() + " " + req.getRequestURI());

@@ -12,6 +12,7 @@ Desafio Técnico Backend (Spring Boot + Java 8 + MSSQL)
 - Mailtrap (testes de e-mail)
 - Spring Boot Actuator (health/info)
 - RestTemplate (consumo de API externa)
+- Spring Scheduler (@Scheduled para relatórios automáticos)
 
 ## Requisitos
 - JDK 1.8 instalado
@@ -22,166 +23,136 @@ Desafio Técnico Backend (Spring Boot + Java 8 + MSSQL)
 ---
 
 ## Setup do Projeto
-1) **Clonar o repositório**
-```bash
+
+### 1) Clonar o repositório
 git clone <repo>
 cd gestao-pedidos
-```
 
-2) **Criar a base de dados e tabelas (SSMS)**
-- Executar o script `db/schema.sql`.
-- Isto cria:
-    - Base de dados `gestaopedidosdb`
-    - Login `egitron / egitron123`
-    - Tabelas: `Client`, `Order`, `ErrorLog`
+### 2) Criar a base de dados e tabelas (SSMS)
+Executar o script `db/schema.sql`.  
+Isto cria:
 
-3) **Configuração da ligação (`src/main/resources/application.properties`)**
-```properties
-spring.datasource.url=jdbc:sqlserver://localhost\\SQLEXPRESS;databaseName=gestaopedidosdb;encrypt=false;trustServerCertificate=true
-spring.datasource.username=egitron
-spring.datasource.password=egitron123
+- Base de dados `gestaopedidosdb`
+- Login `egitron / egitron123`
+- Tabelas: `Client`, `Order`, `ErrorLog`, `OrderStatusHistory`
+
+### 3) Configuração da ligação
+Editar `src/main/resources/application.properties`:
+
+spring.datasource.url=jdbc:sqlserver://localhost\\SQLEXPRESS;databaseName=gestaopedidosdb;encrypt=false;trustServerCertificate=true  
+spring.datasource.username=egitron  
+spring.datasource.password=egitron123  
 spring.datasource.driver-class-name=com.microsoft.sqlserver.jdbc.SQLServerDriver
 
-spring.jpa.hibernate.ddl-auto=none
-spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.SQLServer2012Dialect
+spring.jpa.hibernate.ddl-auto=none  
+spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.SQLServer2012Dialect  
 spring.jpa.show-sql=false
 
 # Actuator
-management.endpoints.web.exposure.include=health,info
+management.endpoints.web.exposure.include=health,info  
 management.endpoint.health.show-details=always
-```
 
-4) **Arrancar**
-```bash
+### 4) Arrancar
 mvn spring-boot:run
-```
 
 ---
 
-## Validação Externa de Clientes (**CONCLUÍDO**)
-Ao criar/atualizar pedidos (quando altera nome/email), a API valida o **nome/email** num serviço externo (mock em DEV) e **grava o resultado no próprio pedido**.
+## Validação Externa de Clientes
+Ao criar/atualizar pedidos (quando altera nome/email), a API valida o nome/email num serviço externo (mock em DEV) e grava o resultado no próprio pedido.
 
-### Configuração
-Adicionar ao `application.properties`:
-```properties
-# External Client Validation
-external.client.validation.enabled=true
-external.client.validation.url=http://localhost:8080/mock-api/clients/verify
-external.client.validation.failStrategy=FAIL_CLOSED   # ou FAIL_OPEN
-```
+**Configuração**
+external.client.validation.enabled=true  
+external.client.validation.url=http://localhost:8080/mock-api/clients/verify  
+external.client.validation.failStrategy=FAIL_CLOSED
+
 - `enabled`: liga/desliga a validação.
 - `url`: URL do serviço externo (em DEV aponta para o mock interno).
-- `failStrategy`:
-    - `FAIL_CLOSED` → falha externa bloqueia o pedido (400).
-    - `FAIL_OPEN` → falha externa permite seguir, registando “validation skipped …”.
+- `failStrategy`: comportamento em falha (`FAIL_CLOSED` → bloqueia, `FAIL_OPEN` → permite).
 
+**Migração SQL**
+ALTER TABLE [dbo].[Order]  
+ADD validated BIT NULL,  
+validationReason VARCHAR(255) NULL,  
+validationExternalId VARCHAR(64) NULL,  
+validatedAt DATETIME NULL;
 
+**Política de Cliente**
+- Email único (`UQ_Client_Email`).
+- Se existir email igual mas nome diferente → `400 Bad Request`.
 
-### Migração SQL (campos de validação em `Order`)
-Executar **uma vez** após `schema.sql` (ex.: `db/migrations/2025_09_08_add_order_validation.sql`):
-```sql
-ALTER TABLE [dbo].[Order]
-ADD validated BIT NULL,
-    validationReason VARCHAR(255) NULL,
-    validationExternalId VARCHAR(64) NULL,
-    validatedAt DATETIME NULL;
-```
+---
 
-> **Recomendado (integridade):** email único em `Client`
-```sql
-ALTER TABLE [dbo].[Client]
-ADD CONSTRAINT UQ_Client_Email UNIQUE (email);
-```
+## Sistema de Relatórios de Erros
+- **ErrorLog**: entidade para guardar erros no SQL Server.
+- **GlobalExceptionHandler**: captura exceções globais e grava no BD.
+- **ErrorLogService**: cria os registos com detalhes (level, source, endpoint, message, stacktrace).
+- **ErrorReportService**: gera relatórios em texto simples.
+- **EmailService**: envia emails via Mailtrap.
+- **ErrorReportOrchestrator**: envia relatórios automáticos com `@Scheduled`.
 
+**Fluxo**: exceções → gravadas em `ErrorLog` → incluídas em relatórios → enviados por email.
 
+**Configuração**
+spring.mail.host=sandbox.smtp.mailtrap.io  
+spring.mail.port=2525  
+spring.mail.username=<user>  
+spring.mail.password=<pass>  
+spring.mail.from=reports@gestaopedidos.local
 
-### Arquitetura
-- `config/HttpClientConfig.java` → cria o **Bean `RestTemplate`** (cliente HTTP único/configurável).
-- `service/client/ClientValidationService.java` → **interface** (contrato) da validação externa.
-- `service/client/impl/ClientValidationServiceImpl.java` → implementação com `RestTemplate`; lê `enabled/url/failStrategy`; aplica FAIL_OPEN/CLOSED.
-- `api/mock/ClientValidationMockController.java` → **mock DEV** `POST /mock-api/clients/verify` (regras simples: formato email, bloqueia `@example.com`, nome ≥ 2).
-- `service/impl/OrderServiceImpl.java` → chama validação, **grava resultado no pedido** e aplica política do cliente.
-- `model/Order.java` → adicionados campos `validated`, `validationReason`, `validationExternalId`, `validatedAt`.
+error.report.enabled=true  
+error.report.to=<teu_email>  
+error.report.cron=*/30 * * * * *
+error.report.lookbackHours=1  
+error.report.maxItems=200
 
+---
 
+## Histórico de Status de Pedido
+- **OrderStatusHistory**: guarda cada alteração de estado de um `Order`.
 
-### Política de Cliente (integridade)
-- **Email identifica o cliente**.
-- Se já existir cliente com o mesmo email e **nome diferente** → **400 Bad Request** (não renomeamos via `POST /api/orders`).
+**Endpoint**
+GET /api/orders/{id}/history  
+Permite consultar todas as transições de estado de um pedido.
 
-
-
-### Fluxo (resumo)
-1. `POST /api/orders` → `OrderServiceImpl.create(dto)`.
-2. Chama `ClientValidationService.validate(name,email)`.
-3. `ClientValidationServiceImpl` faz `POST` à `external.client.validation.url` (mock em DEV).
-4. Resposta `{valid, reason, externalId}`:
-    - `valid=false` → **400**.
-    - `valid=true` → cria/associa `Client`; em `Order` grava:
-        - `validated=true`
-        - `validationReason` (ex.: "OK" | "validation skipped …")
-        - `validationExternalId`
-        - `validatedAt=NOW()`.
-
-
-
-### Trocar mock por serviço real
-- Produção: **alterar apenas** `external.client.validation.url` para o endpoint real (ex.: `https://api.externa/clients/verify`).
-- Não é necessário alterar código.
-
-
+---
 
 ## Endpoints Implementados
-- `POST /api/orders` → criar pedido (validação externa + gravação do resultado)
-- `GET /api/orders` → listar pedidos (paginado + filtros status/datas)
-- `GET /api/orders/{id}` → consultar pedido específico
-- `PATCH /api/orders/{id}` → atualizar parcialmente (estado, cliente*, valor)  
-  \* Se mudar nome/email → **revalida externamente** e atualiza campos de validação na `Order`.
-- `GET /actuator/health` → estado da API e BD
-- **DEV**: `POST /mock-api/clients/verify` → mock da validação externa
+- **POST /api/orders** → criar pedido (validação externa + gravação)
+- **GET /api/orders** → listar pedidos (paginado + filtros status/datas)
+- **GET /api/orders/{id}** → consultar pedido específico
+- **PATCH /api/orders/{id}** → atualizar parcialmente (estado, cliente*, valor)
+- **GET /api/orders/{id}/history** → histórico de alterações de estado
+- **GET /actuator/health** → estado da API e BD
+- **POST /mock-api/clients/verify** → mock de validação externa (DEV)
 
+---
 
+## Modelo de Dados
+- **Client** → cliente (email único).
+- **Order** → pedido associado a um cliente, com campos extra de validação externa.
+- **ErrorLog** → registo de erros da aplicação.
+- **OrderStatusHistory** → histórico das mudanças de estado de cada pedido.
 
-## Modelo de Dados (E-R)
-- **Client** → dados do cliente (email único recomendado)
-- **Order** → pedido associado a um cliente
-    - Campos extra (validação externa): `validated`, `validationReason`, `validationExternalId`, `validatedAt`
-- **ErrorLog** → registo de erros da aplicação
-
-**Relações**
-- Client (1) —— (N) Order
-- ErrorLog isolada (sem FK)
-
-
+---
 
 ## Estado Atual
-- Projeto Spring Boot configurado
-- Script SQL (`db/schema.sql`) criado e validado no MSSQL
-- **Migração aplicada** para campos de validação em `Order`
-- Entidades JPA (`Client`, `Order`, `ErrorLog`) implementadas
-- Repositórios Spring Data JPA criados
-- DTOs: `CreateOrderDTO`, `UpdateOrderDTO`, `OrderFilterDTO`, `OrderDTO`
-- Service:
-    - `OrderServiceImpl` com validação externa e política (email = chave)
-    - `ClientValidationService` + `ClientValidationServiceImpl`
-- Controllers: `OrderController`, **Mock DEV** (`ClientValidationMockController`)
-- Pesquisa com filtros (status + intervalo de datas)
-- Gestão de Erros: `ApiError`, `GlobalExceptionHandler`, `ErrorLog` + `ErrorLogService`
-- Health: `/actuator/health`, `/actuator/info`
-- Postman: collection em `postman/GestaoPedidos_API.postman_collection.json`
+- Projeto configurado com Spring Boot + SQL Server.
+- Migrações aplicadas (validação em `Order`, histórico de estados).
+- Entidades: `Client`, `Order`, `ErrorLog`, `OrderStatusHistory`.
+- Serviços: validação externa, logging, relatórios de erros, envio de emails.
+- Endpoints Postman preparados para testar todas as features.
 
-
+---
 
 ## Notas de Clean Code
-- Separação de responsabilidades (Controller → Service → Gateway externo).
-- Injeção de dependências (Bean `RestTemplate`) e configuração centralizada.
-- Regras de domínio explícitas (email identifica cliente).
-- Tratamento uniforme de erros (400/404/500) e registo em `ErrorLog`.
-- Comportamento configurável por `properties`.
+- Arquitetura em camadas (**Controller → Service → Repository**).
+- Separação de responsabilidades clara.
+- Configuração centralizada via `application.properties`.
+- Tratamento uniforme de erros (400/404/500).
+- Integração com serviços externos (mock + real).
+- Relatórios automáticos + histórico de estados para auditoria.
 
+---
 
-
-##  Próximos Passos
-- Envio de relatórios de erros por e-mail (Mailtrap)
-- Implementar autenticação OAuth2 (Bearer token)
-
+## Próximos Passos
+- Implementar **Autenticação OAuth2 / JWT** conforme requisito do desafio.
