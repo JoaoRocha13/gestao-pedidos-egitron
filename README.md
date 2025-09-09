@@ -128,7 +128,7 @@ Permite consultar todas as transições de estado de um pedido.
 - **GET /auth/me(token)** → info do utilizador autenticado (debug)
 - **GET /orders (token)** → listar pedidos autenticados
 - **POST /orders (token)** → criar pedido autenticado
-- 
+
 
 ---
 
@@ -153,15 +153,12 @@ app.jwt.secret=egitron-gestao-pedidos-super-secret-key-2025-abc123456789!
 app.jwt.expirationMillis=3600000
 
 - Endpoints de Auth
-
 POST /auth/login → devolve JWT
-
 GET /auth/me → devolve utilizador autenticado (debug)
 
 
 ## Fluxo de Autenticação (resumo)
-- 1) Login
-
+1) Login
 Frontend → POST /auth/login
 Controller valida credenciais
 JwtService gera JWT
@@ -185,7 +182,7 @@ SecurityConfig bloqueia → 401 Unauthorized
 - Serviços: validação externa, logging, relatórios de erros, envio de emails.
 - Autenticação JWT concluída (OAuth2 Bearer).
 - Endpoints Postman preparados para testar todas as features.
-- 
+
 
 ---
 
