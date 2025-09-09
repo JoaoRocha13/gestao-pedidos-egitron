@@ -137,8 +137,6 @@ FOR JSON PATH;.
 
 ---
 
-
-
 ## Histórico de Status de Pedido
 - **OrderStatusHistory**: guarda cada alteração de estado de um `Order`.
 
@@ -206,6 +204,32 @@ OrdersController executa
 JwtAuthFilter não autentica
 SecurityConfig bloqueia → 401 Unauthorized
 
+---
+
+## Testes (unitários e controller)
+
+1) Unitários (Service): isolam regras de negócio com Mockito (sem Spring Context).
+
+- mvn -Dtest='*ServiceTest' test
+
+
+2) Controller (slice Web): use @WebMvcTest para testar apenas mapeamentos/validações/status HTTP.
+Mocke os serviços com @MockBean e não levante JPA/BD (evita entityManagerFactory).
+
+@WebMvcTest(controllers = OrderController.class)
+@AutoConfigureMockMvc(addFilters = false)
+@ImportAutoConfiguration(exclude = {
+DataSourceAutoConfiguration.class,
+HibernateJpaAutoConfiguration.class,
+JpaRepositoriesAutoConfiguration.class
+})
+
+
+3) Executar:
+
+mvn -Dtest=OrderControllerTest test
+
+--- 
 
 ## Estado Atual
 - Projeto configurado com Spring Boot + SQL Server.
