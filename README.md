@@ -106,7 +106,7 @@ error.report.lookbackHours=1
 error.report.maxItems=200
 
 
-## 📎 Evidências (Logs & Relatórios)
+## Evidências (Logs & Relatórios)
 
 **Ficheiros em `/docs`:**
 - `error-report-sample.txt` — corpo do e-mail do Mailtrap.
