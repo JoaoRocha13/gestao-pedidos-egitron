@@ -25,7 +25,7 @@ public class JwtService {
 
     @PostConstruct
     void init() {
-        // jjwt 0.11.x: a key HMAC deve ter >= 256 bits para HS256
+
         this.key = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
     }
 

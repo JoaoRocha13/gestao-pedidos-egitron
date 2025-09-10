@@ -59,7 +59,7 @@ public class OrderController {
         return ResponseEntity.ok(orderService.update(id, body));
     }
 
-    // NEW: GET /api/orders/{orderId}/history
+    //GET /api/orders/{orderId}/history
     @GetMapping("/{orderId}/history")
     public ResponseEntity<List<OrderStatusHistoryDTO>> getOrderHistory(@PathVariable Integer orderId) {
         // ensure order exists (throws 404 if not)

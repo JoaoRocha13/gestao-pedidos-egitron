@@ -18,7 +18,7 @@ public class OrderStatusHistory {
     private Order order;
 
     @Column(name = "status", nullable = false, length = 30)
-    private String status; // snapshot of the status at the time of the change
+    private String status;
 
     @Column(name = "changedAtUtc", nullable = false)
     private LocalDateTime changedAtUtc;
@@ -36,7 +36,7 @@ public class OrderStatusHistory {
         }
     }
 
-    // Getters and setters
+
     public Long getHistoryId() { return historyId; }
     public void setHistoryId(Long historyId) { this.historyId = historyId; }
 

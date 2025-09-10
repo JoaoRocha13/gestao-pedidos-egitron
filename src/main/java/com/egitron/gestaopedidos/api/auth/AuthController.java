@@ -49,7 +49,7 @@ public class AuthController {
         return ResponseEntity.ok(principal.getName());
     }
 
-    // DTOs mínimos
+    // DTOs
     public static class LoginRequest {
         @NotBlank private String username;
         @NotBlank private String password;
