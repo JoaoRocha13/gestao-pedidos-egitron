@@ -15,7 +15,7 @@ import java.io.IOException;
 import java.util.Collections;
 
 /**
- * Filtro JWT minimalista:
+ * Filtro JWT
  * - Extrai "Authorization: Bearer <token>"
  * - Valida o token via JwtService
  * - Se válido, coloca Authentication no SecurityContext (stateless)

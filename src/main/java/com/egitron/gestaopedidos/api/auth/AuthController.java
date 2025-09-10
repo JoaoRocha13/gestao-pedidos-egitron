@@ -31,7 +31,7 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody @Validated LoginRequest body) {
-        // normaliza inputs
+
         String u = body.getUsername() == null ? "" : body.getUsername().trim();
         String p = body.getPassword() == null ? "" : body.getPassword();
 
@@ -42,7 +42,7 @@ public class AuthController {
         return ResponseEntity.ok(new LoginResponse("Bearer", token));
     }
 
-    // útil para testar rapidamente o token
+
     @GetMapping("/me")
     public ResponseEntity<?> me(Principal principal) {
         if (principal == null) return ResponseEntity.status(401).build();

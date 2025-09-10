@@ -68,7 +68,7 @@ public class OrderServiceImpl implements com.egitron.gestaopedidos.service.Order
         order.setTotalAmount(dto.getAmount());
         order.setCurrentStatus(normalizeStatusOrDefault(dto.getStatus(), "PENDING"));
 
-        // persist external validation result on the order
+
         order.setValidated(Boolean.TRUE);
         order.setValidationReason(v.getReason());
         order.setValidationExternalId(v.getExternalId());
@@ -76,7 +76,7 @@ public class OrderServiceImpl implements com.egitron.gestaopedidos.service.Order
 
         order = orderRepository.save(order);
 
-        // NEW: record initial status in history
+
         orderStatusHistoryService.recordStatusChange(
                 order,
                 order.getCurrentStatus(),
@@ -104,11 +104,11 @@ public class OrderServiceImpl implements com.egitron.gestaopedidos.service.Order
                 throw new BadRequestException("Cliente inválido (validação externa): " + v.getReason());
             }
 
-            // apply changes on client
+
             if (hasText(dto.getClientName()))  order.getClient().setName(dto.getClientName());
             if (hasText(dto.getClientEmail())) order.getClient().setEmail(dto.getClientEmail());
 
-            // persist external validation result on the order
+
             order.setValidated(Boolean.TRUE);
             order.setValidationReason(v.getReason());
             order.setValidationExternalId(v.getExternalId());
@@ -120,7 +120,7 @@ public class OrderServiceImpl implements com.egitron.gestaopedidos.service.Order
             order.setTotalAmount(dto.getAmount());
         }
 
-        // capture previous status to decide whether to write history
+
         String previousStatus = order.getCurrentStatus();
 
         if (hasText(dto.getStatus())) {
@@ -129,7 +129,7 @@ public class OrderServiceImpl implements com.egitron.gestaopedidos.service.Order
 
         order = orderRepository.save(order);
 
-        // NEW: only record history if status actually changed
+
         if ((previousStatus == null && order.getCurrentStatus() != null)
                 || (previousStatus != null && !previousStatus.equalsIgnoreCase(order.getCurrentStatus()))) {
             orderStatusHistoryService.recordStatusChange(
@@ -156,7 +156,7 @@ public class OrderServiceImpl implements com.egitron.gestaopedidos.service.Order
     public Page<OrderDTO> search(OrderFilterDTO filter, Pageable pageable) {
         Specification<Order> spec = buildSpec(filter);
 
-        // Ordenação por defeito: createdAtUtc DESC
+
         Pageable effective = pageable;
         if (effective.getSort().isUnsorted()) {
             effective = PageRequest.of(
@@ -169,7 +169,7 @@ public class OrderServiceImpl implements com.egitron.gestaopedidos.service.Order
         return orderRepository.findAll(spec, effective).map(this::toDTO);
     }
 
-    // Specifications (apenas ESTADO e DATAS)
+
 
     private Specification<Order> buildSpec(final OrderFilterDTO f) {
         return new Specification<Order>() {
@@ -221,7 +221,6 @@ public class OrderServiceImpl implements com.egitron.gestaopedidos.service.Order
             return existing;
         }
 
-        // cria novo cliente
         Client created = new Client();
         created.setName(nameTrim);
         created.setEmail(emailTrim);
@@ -270,7 +269,7 @@ public class OrderServiceImpl implements com.egitron.gestaopedidos.service.Order
         return dto;
     }
 
-    /** Java 8 helper (equivalente a String#isBlank em versões novas) */
+
     private boolean hasText(String s) {
         return s != null && s.trim().length() > 0;
     }
