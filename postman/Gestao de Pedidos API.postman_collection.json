@@ -102,6 +102,14 @@
 				"header": []
 			},
 			"response": []
+		},
+		{
+			"name": "GET/Boom",
+			"request": {
+				"method": "GET",
+				"header": []
+			},
+			"response": []
 		}
 	]
 }

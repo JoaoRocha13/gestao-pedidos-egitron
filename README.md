@@ -158,7 +158,7 @@ Permite consultar todas as transições de estado de um pedido.
 - **GET /auth/me(token)** → info do utilizador autenticado (debug)
 - **GET /orders (token)** → listar pedidos autenticados
 - **POST /orders (token)** → criar pedido autenticado
-
+- **GET /Boom** → forçar erro 500 (testes)
 
 ---
 

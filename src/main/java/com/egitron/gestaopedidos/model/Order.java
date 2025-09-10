@@ -8,7 +8,7 @@ import javax.persistence.Column;
 
 
 @Entity
-@Table(name = "[Order]") // ⚠️ "Order" é palavra reservada em SQL Server
+@Table(name = "[Order]") //
 public class Order {
 
     @Id
